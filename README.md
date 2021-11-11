@@ -7,7 +7,7 @@
   - [Getting started](#getting-started)
   - [Adding a header](#adding-a-header)
   - [Linking more cells](#linking-more-cells)
-  - [Formatting cell values](#formatting-cell-values)
+  - [Cell formatting](#cell-formatting)
 - [API reference](#api-reference)
 - [A note on spreadsheets](#a-note-on-spreadsheets)
 - [Development](#development)
@@ -224,7 +224,7 @@ Now you should see the cell values update automatically when you modify any of t
     <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=2042929262">👀 See the result ✨</a></h4>
 </div>
 
-### Formatting cell values
+### Cell formatting
 
 The sheet we have displays the data correctly and the cells are linked with each other. Yipee. However, it's a bit ugly, and it would be nice to also format the cells programmatically. Indeed, readability would be improved by adding some colors and formatting the percentages.
 
