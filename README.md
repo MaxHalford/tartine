@@ -15,7 +15,7 @@
 
 ## What this is
 
-Exporting a dataframe to a spreadsheet is trivial. But this results in a flat and static spreadsheet where the cells are not linked with each other. This is what this tool addresses: it allows you to programmatically generate spreadsheets with arbitrary layouts and dynamic cells.
+Exporting a dataframe to a spreadsheet is trivial. But this results in a flat and static spreadsheet where the cells are not linked with each other. This is what this tool addresses: it allows you to programmatically generate dynamic spreadsheets with arbitrary layouts.
 
 ## Installation
 
