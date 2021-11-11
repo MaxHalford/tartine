@@ -177,8 +177,6 @@ wks.update_cells(cells)
     <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=709697806">👀 See the result ✨</a></h4>
 </div>
 
-[**👀 See the result ✨**]()
-
 ### Linking more cells
 
 The spreadsheet we built displays the data in a static manner. The share of each rarity is obtained by dividing the amount of cards by the total amount. You'll notice that the total doesn't change if you manually edit any of the amounts. This is because it's calculated from the data, and isn't actually referencing any of the cells. We can change this by using named formulas instead of variables.
