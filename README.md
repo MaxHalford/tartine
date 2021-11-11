@@ -1,8 +1,21 @@
-# tartine
+<h1>🍞 tartine</h1>
+
+- [What this is](#what-this-is)
+- [Installation](#installation)
+- [Usage example](#usage-example)
+  - [Fetching some data](#fetching-some-data)
+  - [Getting started](#getting-started)
+  - [Adding a header](#adding-a-header)
+  - [Linking more cells](#linking-more-cells)
+  - [Formatting cell values](#formatting-cell-values)
+- [API reference](#api-reference)
+- [A note on spreadsheets](#a-note-on-spreadsheets)
+- [Development](#development)
+- [License](#license)
 
 ## What this is
 
-It's trivial to export a dataframe to an Excel or CSV spreadsheet. But this results in a flat and static spreadsheet where the cells are not linked with each other. This is the aim of this tool: programmatically generate spreadsheets with arbitrary layouts that may contain dynamic cells.
+Exporting a dataframe to a spreadsheet is trivial. But this results in a flat and static spreadsheet where the cells are not linked with each other. This is what this tool addresses: it allows you to programmatically generate spreadsheets with arbitrary layouts and dynamic cells.
 
 ## Installation
 
@@ -115,7 +128,9 @@ wks.clear()
 wks.update_cells(cells)
 ```
 
-[**👀 See the result ✨**](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=709697806)
+<div align="center">
+    <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=0">👀 See the result ✨</a></h4>
+</div>
 
 ### Adding a header
 
@@ -158,7 +173,11 @@ wks.clear()
 wks.update_cells(cells)
 ```
 
-[**👀 See the result ✨**](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=709697806)
+<div align="center">
+    <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=709697806">👀 See the result ✨</a></h4>
+</div>
+
+[**👀 See the result ✨**]()
 
 ### Linking more cells
 
@@ -203,7 +222,9 @@ wks.update_cells(cells)
 
 Now you should see the cell values update automatically when you modify any of the amounts.
 
-[**👀 See the result ✨**](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=2042929262)
+<div align="center">
+    <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=2042929262">👀 See the result ✨</a></h4>
+</div>
 
 ### Formatting cell values
 
@@ -277,7 +298,9 @@ wks.clear()
 wks.update_cells(cells)
 ```
 
-[**👀 See the result ✨**](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=1836554356)
+<div align="center">
+    <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=1836554356">👀 See the result ✨</a></h4>
+</div>
 
 ## API reference
 
