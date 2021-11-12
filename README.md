@@ -202,7 +202,7 @@ template = {
 
 cells, nrows = tartine.spread(template.keys(), None, flavor='pygsheets')
 
-for i, card_set in enumerate(card_sets.to_dict('records')):
+for card_set in card_sets.to_dict('records'):
     _cells, _nrows = tartine.spread(
         template=template.values(),
         data=card_set,
