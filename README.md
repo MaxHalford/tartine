@@ -302,7 +302,7 @@ wks.update_cells(cells)
 
 ## API reference
 
-There is only one entrypoint: the `spread` functions. It has the following parameters:
+There is a single entrypoint, which is the `spread` function. It has the following parameters:
 
 - `template` — a list of expressions which determines how the cells are layed out.
 - `data` — a dictionary of data to render.
