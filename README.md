@@ -100,7 +100,7 @@ This template contains the four different kinds of expressions which `tartine` r
 3. `= @Common / @total` is a formula.
 4. `total = @Common + @Rare + @Epic + @Legendary` is a named formula, which means `@total` can be used elsewhere.
 
-You can generate `pygheets` cells by spreading the data according to the above template:
+You can generate `pygsheets.Cell`s by spreading the data according to the above template:
 
 ```py
 import tartine
