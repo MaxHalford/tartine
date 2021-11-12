@@ -62,7 +62,7 @@ print(card_sets.head())
 
 ### Getting started
 
-We'll be dumpimp data into a Google Sheet. The [`pygsheets` library](https://pygsheets.readthedocs.io/en/stable/index.html) can be used to interact with Google Sheets.
+We'll be dumping data into [this](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA) public Google Sheet for the sake of example. The [`pygsheets` library](https://pygsheets.readthedocs.io/en/stable/index.html) can be used to interact with Google Sheets.
 
 ```py
 import pygsheets
