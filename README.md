@@ -331,6 +331,7 @@ git clone https://github.com/MaxHalford/tartine
 cd tartine
 pip install poetry
 poetry install
+poetry shell
 pytest
 ```
 
