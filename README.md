@@ -26,7 +26,7 @@ Exporting a dataframe to a spreadsheet is trivial. But this results in a flat an
 pip install tartine
 ```
 
-You can use `tartine` to generate cells with different libraries. You'll have to install these separately. For instance, run `pip install pygsheets` to use [`pygsheets`](https://pygsheets.readthedocs.io/en/stable/index.html).
+You can use `tartine` to generate cells with different libraries. You'll have to install these separately. For instance, run `pip install pygsheets` to use [`pygsheets`](https://pygsheets.readthedocs.io/en/stable/index.html). The [`pandas`](https://pandas.pydata.org/) library is also not installed by default.
 
 ## Usage example
 
