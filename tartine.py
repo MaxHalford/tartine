@@ -11,7 +11,6 @@ __all__ = ["spread"]
 
 class Flavor(enum.Enum):
     PYGSHEETS = "pygsheets"
-    GSPREAD = "gspread"
 
 
 Template = Dict[str, Union[str, Tuple[str, ...]]]
@@ -132,10 +131,6 @@ class _Cell:
 
         expr = _bake_expression(self.expr, data)
         cell = pygsheets.Cell(pos=self.address, val=expr)
-
-        # if _is_named_formula(self.expr):
-        #     name = self.expr.split(" = ")[0]
-        #     cell.note = name
 
         if _is_formula(expr):
             cell.formula = expr

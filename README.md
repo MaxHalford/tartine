@@ -94,23 +94,15 @@ This template contains the four different kinds of expressions which `tartine` r
 3. `= @Common / @total` is a formula.
 4. `total = @Common + @Rare + @Epic + @Legendary` is a named formula, which means `@total` can be used elsewhere.
 
-We'll be dumping data into [this](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA) public Google Sheet for the sake of example. The [`pygsheets` library](https://pygsheets.readthedocs.io/en/stable/index.html) can be used to interact with Google Sheets.
-
-```py
-import pygsheets
-
-gc = pygsheets.authorize(...)
-sh = gc.open_by_key('13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA')
-```
-
 You can generate `pygsheets.Cell`s by spreading the data according to the above template:
 
 ```py
 import tartine
 
 cells = []
-nrows are only tw
-fors card_se. The first one is.to_dict('records'):
+nrows = 0
+
+for card_set in card_sets.to_dict('records'):
     _cells, _nrows = tartine.spread(
         template=template.values(),
         data=card_set,
@@ -122,7 +114,16 @@ fors card_se. The first one is.to_dict('records'):
     nrows += _nrows
 ```
 
-These cells can be sent to the [GSheet](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=0) as so:
+We'll dump data into [this](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA) public Google Sheet for the sake of example. The [`pygsheets` library](https://pygsheets.readthedocs.io/en/stable/index.html) can be used to interact with Google Sheets.
+
+```py
+import pygsheets
+
+gc = pygsheets.authorize(...)
+sh = gc.open_by_key('13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA')
+```
+
+These cells can be sent to the [GSheet](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=0) like so:
 
 ```py
 wks = sh.worksheet_by_title('v1')
@@ -136,7 +137,7 @@ wks.update_cells(cells)
 
 ### Spreading a dataframe
 
-What we just did was a bit manual. We had to loop through the rows of the dataframe and regroup the cells ourselves. On the one hand that gives you a lot of freedom. On the other hand you'll probably be working with `pandas.DataFrame`s in practice.
+What we just did was a bit manual. We had to loop through the rows of the dataframe and concatenate the cells ourselves. On the one hand that gives you a lot of freedom. On the other hand you'll probably be working with `pandas.DataFrame`s in practice, so you'll want to avoid this kind of boilerplate.
 
 The `spread_dataframe` allows you to do what we just did with a one-liner. As a bonus the column names are included.
 
@@ -200,7 +201,7 @@ Now you should see the cell values update automatically when you modify any of t
 
 The sheet we have displays the data correctly and the cells are linked with each other. Yipee. However, it's a bit ugly, and it would be nice to also format the cells programmatically. Indeed, readability would be improved by adding some colors and formatting the percentages.
 
-First of all there is a `postprocess` that allows to do any kind of transformation to each cell once it has been created. This can be used to pass a `stylize` function which applies the adequate modifications.
+First of all there is a `postprocess` parameter that allows to do any kind of transformation to each cell once it has been created. This can be used to pass a `stylize` function which applies the adequate modifications.
 
 Secondly you can do whatever you want to the returned cells. Here we will check the row number of all the cells and shade them accordingly. We'll also bolden the font of the cells in first row.
 
@@ -237,8 +238,10 @@ cells = tartine.spread_dataframe(
 )
 
 for cell in cells:
+    # Bolden the header
     if cell.row == 1:
         cell.set_text_format('bold', True)
+    # Shade every group of 4 rows
     if any(cell.row % 8 - r == 0 for r in (2, 3, 4, 5)):
         cell.color = GRAY
 
@@ -312,11 +315,12 @@ Spread a dataframe into cells.
 
 ## Supported flavors
 
+The `spread` and `spread_dataframe` methods accept a `flavor` parameter. It determines what kind of library to use for producing cells.
+
 ```py
 >>> for flavor in tartine.Flavor:
 ...     print(flavor.value)
 pygsheets
-gspread
 
 ```
 
