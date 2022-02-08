@@ -5,10 +5,13 @@
 - [Usage example](#usage-example)
   - [Fetching some data](#fetching-some-data)
   - [Getting started](#getting-started)
-  - [Adding a header](#adding-a-header)
+  - [Spreading a dataframe](#spreading-a-dataframe)
   - [Linking more cells](#linking-more-cells)
   - [Cell formatting](#cell-formatting)
 - [API reference](#api-reference)
+  - [`spread`](#spread)
+  - [`spread_dataframe`](#spread_dataframe)
+- [Supported flavors](#supported-flavors)
 - [A note on spreadsheets](#a-note-on-spreadsheets)
 - [Development](#development)
 - [License](#license)
@@ -62,79 +65,7 @@ print(card_sets.head())
 
 ### Getting started
 
-We'll be dumping data into [this](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA) public Google Sheet for the sake of example. The [`pygsheets` library](https://pygsheets.readthedocs.io/en/stable/index.html) can be used to interact with Google Sheets.
-
-```py
-import pygsheets
-
-gc = pygsheets.authorize(...)
-sh = gc.open_by_key('13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA')
-```
-
 You use `tartine` by specifying how you want to spread your data with a template. For this dataset, we want to display the amount of cards per rarity, along with the share each amount represents.
-
-```py
-template = [
-    "@'Set name'",
-    ('Common', 'Rare', 'Epic', 'Legendary'),
-    (
-        '@Common',
-        '@Rare',
-        '@Epic',
-        '@Legendary',
-    ),
-    (
-        '= @Common / @total',
-        '= @Rare / @total',
-        '= @Epic / @total',
-        '= @Legendary / @total'
-    ),
-    'total = @Common + @Rare + @Epic + @Legendary'
-]
-```
-
-This template contains the four different kinds of expressions which `tartine` recognises:
-
-1. `'Common'` is a constant.
-2. `@Common` and `@'Set name'` are variables.
-3. `= @Common / @total` is a formula.
-4. `total = @Common + @Rare + @Epic + @Legendary` is a named formula, which means `@total` can be used elsewhere.
-
-You can generate `pygsheets.Cell`s by spreading the data according to the above template:
-
-```py
-import tartine
-
-cells = []
-nrows = 0
-
-for card_set in card_sets.to_dict('records'):
-    _cells, _nrows = tartine.spread(
-        template=template,
-        data=card_set,
-        start_row=nrows,
-        flavor='pygsheets'
-    )
-
-    cells += _cells
-    nrows += _nrows
-```
-
-These cells can be sent to the [GSheet](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=0) as so:
-
-```py
-wks = sh.worksheet_by_title('v1')
-wks.clear()
-wks.update_cells(cells)
-```
-
-<div align="center">
-    <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=0">👀 See the result ✨</a></h4>
-</div>
-
-### Adding a header
-
-The GSheet we create in the previous sub-section doesn't contain any column headers. It's trivial to add these, as they're just constants. The tidy thing to do is to turn the template into a dictionary.
 
 ```py
 template = {
@@ -154,19 +85,67 @@ template = {
     ),
     'Total': 'total = @Common + @Rare + @Epic + @Legendary'
 }
+```
 
-cells, nrows = tartine.spread(template.keys(), None, flavor='pygsheets')
+This template contains the four different kinds of expressions which `tartine` recognises:
 
-for card_set in card_sets.to_dict('records'):
+1. `'Common'` is a constant.
+2. `@Common` is a variable.
+3. `= @Common / @total` is a formula.
+4. `total = @Common + @Rare + @Epic + @Legendary` is a named formula, which means `@total` can be used elsewhere.
+
+We'll be dumping data into [this](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA) public Google Sheet for the sake of example. The [`pygsheets` library](https://pygsheets.readthedocs.io/en/stable/index.html) can be used to interact with Google Sheets.
+
+```py
+import pygsheets
+
+gc = pygsheets.authorize(...)
+sh = gc.open_by_key('13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA')
+```
+
+You can generate `pygsheets.Cell`s by spreading the data according to the above template:
+
+```py
+import tartine
+
+cells = []
+nrows are only tw
+fors card_se. The first one is.to_dict('records'):
     _cells, _nrows = tartine.spread(
         template=template.values(),
         data=card_set,
-        start_row=nrows,
+        start_at=nrows,
         flavor='pygsheets'
     )
 
     cells += _cells
     nrows += _nrows
+```
+
+These cells can be sent to the [GSheet](https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=0) as so:
+
+```py
+wks = sh.worksheet_by_title('v1')
+wks.clear()
+wks.update_cells(cells)
+```
+
+<div align="center">
+    <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=0">👀 See the result ✨</a></h4>
+</div>
+
+### Spreading a dataframe
+
+What we just did was a bit manual. We had to loop through the rows of the dataframe and regroup the cells ourselves. On the one hand that gives you a lot of freedom. On the other hand you'll probably be working with `pandas.DataFrame`s in practice.
+
+The `spread_dataframe` allows you to do what we just did with a one-liner. As a bonus the column names are included.
+
+```py
+cells = tartine.spread_dataframe(
+    template=template,
+    df=card_sets,
+    flavor='pygsheets'
+)
 
 wks = sh.worksheet_by_title('v2')
 wks.clear()
@@ -200,18 +179,11 @@ template = {
     'Total': 'total = @common + @rare + @epic + @legendary'
 }
 
-cells, nrows = tartine.spread(template.keys(), None, flavor='pygsheets')
-
-for card_set in card_sets.to_dict('records'):
-    _cells, _nrows = tartine.spread(
-        template=template.values(),
-        data=card_set,
-        start_row=nrows,
-        flavor='pygsheets'
-    )
-
-    cells += _cells
-    nrows += _nrows
+cells = tartine.spread_dataframe(
+    template=template,
+    df=card_sets,
+    flavor='pygsheets'
+)
 
 wks = sh.worksheet_by_title('v3')
 wks.clear()
@@ -228,68 +200,47 @@ Now you should see the cell values update automatically when you modify any of t
 
 The sheet we have displays the data correctly and the cells are linked with each other. Yipee. However, it's a bit ugly, and it would be nice to also format the cells programmatically. Indeed, readability would be improved by adding some colors and formatting the percentages.
 
-The `spread` function simply returns a list of `pygsheet.Cell`s, so we can do what we want with them. We can set the `annotate` parameter to `True` to add notes to each cell. This makes it easier to determine what kind of formatting to apply to each cell.
+First of all there is a `postprocess` that allows to do any kind of transformation to each cell once it has been created. This can be used to pass a `stylize` function which applies the adequate modifications.
+
+Secondly you can do whatever you want to the returned cells. Here we will check the row number of all the cells and shade them accordingly. We'll also bolden the font of the cells in first row.
 
 ```py
-template = {
-    'Set name': ("@'Set name'", '', '', ''),
-    'Rarity': ('Common', 'Rare', 'Epic', 'Legendary'),
-    'Count': (
-        'common = @Common',
-        'rare = @Rare',
-        'epic = @Epic',
-        'legendary = @Legendary',
-    ),
-    'Share': (
-        'common_share = @common / @total',
-        'rare_share = @rare / @total',
-        'epic_share = @epic / @total',
-        'legendary_share = @legendary / @total'
-    ),
-    'Total': ('total = @common + @rare + @epic + @legendary', '', '', '')
-}
-
 GRAY = (245 / 255, 245 / 255, 250 / 255, 1)
 BLUE = (65 / 255, 105 / 255, 255 / 255, 1)
 PURPLE = (191 / 255, 0 / 255, 255 / 255, 1)
 ORANGE = (255 / 255, 140 / 255, 0 / 255, 1)
 
-cells, nrows = tartine.spread(template.keys(), None, flavor='pygsheets')
-for cell in cells:
-    cell.set_text_format('bold', True)
+def stylize(cell, name):
 
-for i, card_set in enumerate(card_sets.to_dict('records')):
-    _cells, _nrows = tartine.spread(
-        template=template.values(),
-        data=card_set,
-        start_row=nrows,
-        flavor='pygsheets',
-        annotate=True
-    )
-
-    if i % 2:
-        for cell in _cells:
-            cell.color = GRAY
-
-    cells += _cells
-    nrows += _nrows
-
-for cell in cells:
-
-    if cell.note and 'share' in cell.note:
+    # Format percentages
+    if name and 'share' in name:
         cell.set_number_format(
             format_type= pygsheets.FormatType.PERCENT,
             pattern='##0.00%'
         )
 
-    if cell.note and 'rare' in cell.note:
+    # Color by rarity
+    if name and 'rare' in name:
         cell.set_text_format('foregroundColor', BLUE)
-    elif cell.note and 'epic' in cell.note:
+    elif name and 'epic' in name:
         cell.set_text_format('foregroundColor', PURPLE)
-    elif cell.note and 'legendary' in cell.note:
+    elif name and 'legendary' in name:
         cell.set_text_format('foregroundColor', ORANGE)
 
-    cell.note = None
+    return cell
+
+cells = tartine.spread_dataframe(
+    template=template,
+    df=card_sets,
+    flavor='pygsheets',
+    postprocess=stylize
+)
+
+for cell in cells:
+    if cell.row == 1:
+        cell.set_text_format('bold', True)
+    if any(cell.row % 8 - r == 0 for r in (2, 3, 4, 5)):
+        cell.color = GRAY
 
 wks = sh.worksheet_by_title('v4')
 wks.clear()
@@ -302,15 +253,72 @@ wks.update_cells(cells)
 
 ## API reference
 
-There is a single entrypoint, which is the `spread` function. It has the following parameters:
+### `spread`
 
-- `template` — a list of expressions which determines how the cells are layed out.
-- `data` — a dictionary of data to render.
-- `start_row` — the row number where the layout begins. Zero-based.
-- `flavor` — determines what kinds of cells to generate. Only the `pygsheets` flavor is supported right now.
-- `annotate` — determines whether or not to attach notes to cells which contain named formulas.
+```py
+>>> import tartine
+>>> print(tartine.spread.__doc__)
+Spread data into cells.
+<BLANKLINE>
+    Parameters
+    ----------
+    template
+        A list of expressions which determines how the cells are layed out.
+    data
+        A dictionary of data to render.
+    flavor
+        Determines what kind of cells to generate.
+    postprocess
+        An optional function to call for each cell once it has been created.
+    start_at
+        The row number where the layout begins. Zero-based.
+<BLANKLINE>
+    Returns
+    -------
+    cells
+        The list of cells.
+    n_rows
+        The number of rows which the cells span over.
+<BLANKLINE>
+<BLANKLINE>
 
-The `spread` function returns the list of cells and the number of rows which the cells span over.
+```
+
+### `spread_dataframe`
+
+```py
+>>> print(tartine.spread_dataframe.__doc__)
+Spread a dataframe into cells.
+<BLANKLINE>
+    Parameters
+    ----------
+    df
+        A dataframe to render.
+    template
+        A list of expressions which determines how the cells are layed out.
+    flavor
+        Determines what kind of cells to generate.
+    postprocess
+        An optional function to call for each cell once it has been created.
+<BLANKLINE>
+    Returns
+    -------
+    cells
+        The list of cells.
+<BLANKLINE>
+<BLANKLINE>
+
+```
+
+## Supported flavors
+
+```py
+>>> for flavor in tartine.Flavor:
+...     print(flavor.value)
+pygsheets
+gspread
+
+```
 
 ## A note on spreadsheets
 

@@ -3,14 +3,18 @@ import re
 import string
 from collections import UserDict, UserList
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 
 __all__ = ["spread"]
 
 
-class _Flavor(enum.Enum):
+class Flavor(enum.Enum):
     PYGSHEETS = "pygsheets"
+    GSPREAD = "gspread"
+
+
+Template = Dict[str, Union[str, Tuple[str, ...]]]
 
 
 def _column_letter(n: int) -> str:
@@ -69,7 +73,7 @@ def _is_formula(expr: str) -> bool:
     return expr.startswith("=")
 
 
-def _is_named_formula(expr):
+def _is_named_formula(expr: str) -> bool:
     """
 
     >>> _is_named_formula("foo")
@@ -88,13 +92,13 @@ def _is_named_formula(expr):
     return bool(re.match(r"[\w_\.]+ = ", expr))
 
 
-def normalize_expression(expr: str) -> str:
+def _normalize_expression(expr: str) -> str:
     """
 
-    >>> normalize_expression(" 1")
+    >>> _normalize_expression(" 1")
     '1'
 
-    >>> normalize_expression("foo  = 2 * 3 ")
+    >>> _normalize_expression("foo  = 2 * 3 ")
     'foo = 2 * 3'
 
     """
@@ -123,15 +127,15 @@ class _Cell:
         """
         return f"{_column_letter(self.c)}{self.r + 1}"
 
-    def as_pygsheets(self, data, annotate: bool) -> "pygsheets.Cell":
+    def as_pygsheets(self, data) -> "pygsheets.Cell":
         import pygsheets
 
         expr = _bake_expression(self.expr, data)
         cell = pygsheets.Cell(pos=self.address, val=expr)
 
-        if annotate and _is_named_formula(self.expr):
-            name = self.expr.split(" = ")[0]
-            cell.note = name
+        # if _is_named_formula(self.expr):
+        #     name = self.expr.split(" = ")[0]
+        #     cell.note = name
 
         if _is_formula(expr):
             cell.formula = expr
@@ -153,31 +157,33 @@ def _bake_expression(expr: str, data: dict) -> str:
 
 
 def spread(
-    template: List,
+    template: Template,
     data: Optional[Dict],
-    start_row: int = 0,
-    flavor: str = _Flavor.PYGSHEETS,
-    annotate: bool = False,
-) -> Tuple[List[_Cell], int]:
+    flavor: Flavor,
+    postprocess: Optional[Callable] = None,
+    start_at: int = 0,
+) -> Tuple[List[Union["pygsheets.Cell"]], int]:
     """Spread data into cells.
 
     Parameters
     ----------
     template
         A list of expressions which determines how the cells are layed out.
-    data.
+    data
         A dictionary of data to render.
-    start_row
-        The row number where the layout begins. Zero-based.
     flavor
-        Determines what kinds of cells to generate. Only the `pygsheets` flavor is supported right now.
-    annotate
-        Determines whether or not to attach notes to cells which contain named formulas.
+        Determines what kind of cells to generate.
+    postprocess
+        An optional function to call for each cell once it has been created.
+    start_at
+        The row number where the layout begins. Zero-based.
 
     Returns
     -------
-    The list of cells.
-    The number of rows which the cells span over.
+    cells
+        The list of cells.
+    n_rows
+        The number of rows which the cells span over.
 
     """
 
@@ -185,7 +191,7 @@ def spread(
 
     table = [
         [
-            _Cell(r + start_row, c, normalize_expression(expr))
+            _Cell(r + start_at, c, _normalize_expression(expr))
             for r, expr in enumerate([col] if isinstance(col, str) else col)
         ]
         for c, col in enumerate(template)
@@ -193,22 +199,72 @@ def spread(
 
     # We're going to add the positions of the named variables to the data
     data = data.copy()
+    cell_names = {}
     for c, col in enumerate(table):
         for r, cell in enumerate(col):
             if _is_named_formula(cell.expr):
                 name = cell.expr.split(" = ")[0]
                 data[name] = cell.address
+                cell_names[len(cell_names)] = name
+            elif _is_variable(cell.expr):
+                cell_names[len(cell_names)] = cell.expr[1:]
+            else:
+                cell_names[len(cell_names)] = None
 
-    if flavor == _Flavor.PYGSHEETS.value:
-        cells = [
-            cell.as_pygsheets(data=data, annotate=annotate)
-            for col in table
-            for cell in col
-        ]
+    if flavor == Flavor.PYGSHEETS.value:
+        cells = [cell.as_pygsheets(data=data) for col in table for cell in col]
     else:
         raise ValueError(
-            f"Unknown flavor. Available options: {', '.join(f.value for f in _Flavor)}"
+            f"Unknown flavor {flavor}. Available options: {', '.join(f.value for f in Flavor)}"
         )
 
+    if postprocess:
+        for i, cell in enumerate(cells):
+            cells[i] = postprocess(cell, cell_names[i])
+
     n_rows = max(map(len, table))
+
     return cells, n_rows
+
+
+def spread_dataframe(
+    template: Template,
+    df: "pd.DataFrame",
+    flavor: Flavor,
+    postprocess: Optional[Callable] = None,
+) -> List[Union["pygsheets.Cell"]]:
+    """Spread a dataframe into cells.
+
+    Parameters
+    ----------
+    df
+        A dataframe to render.
+    template
+        A list of expressions which determines how the cells are layed out.
+    flavor
+        Determines what kind of cells to generate.
+    postprocess
+        An optional function to call for each cell once it has been created.
+
+    Returns
+    -------
+    cells
+        The list of cells.
+
+    """
+
+    cells, nrows = spread(template.keys(), data=None, flavor=flavor)
+
+    for card_set in df.to_dict("records"):
+        _cells, _nrows = spread(
+            template=template.values(),
+            data=card_set,
+            start_at=nrows,
+            flavor=flavor,
+            postprocess=postprocess,
+        )
+
+        cells += _cells
+        nrows += _nrows
+
+    return cells
