@@ -295,10 +295,10 @@ Spread a dataframe into cells.
 <BLANKLINE>
     Parameters
     ----------
-    df
-        A dataframe to render.
     template
         A list of expressions which determines how the cells are layed out.
+    df
+        A dataframe to render.
     flavor
         Determines what kind of cells to generate.
     postprocess
