@@ -298,6 +298,7 @@ def unspread_dataframe(template: Template, df: "pd.DataFrame") -> "pd.DataFrame"
                 var: group[col].iloc[i]
                 for col, variables in template.items()
                 for i, var in enumerate(variables)
+                if var
             }
         )
 

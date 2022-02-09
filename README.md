@@ -292,10 +292,10 @@ v4_flat = tartine.unspread_dataframe(template, v4)
 print(v4_flat.head(2).to_markdown(index=False))
 ```
 
-| set_name                           |    |   total |   common |   rare |   epic |   legendary |
-|:-----------------------------------|:---|--------:|---------:|-------:|-------:|------------:|
-| Fractured in Alterac Valley        |    |     135 |       50 |     35 |     24 |          26 |
-| United in Stormwind with Deadmines |    |     170 |       66 |     49 |     26 |          29 |
+| set_name                           |   total |   common |   rare |   epic |   legendary |
+|:-----------------------------------|--------:|---------:|-------:|-------:|------------:|
+| Fractured in Alterac Valley        |     135 |       50 |     35 |     24 |          26 |
+| United in Stormwind with Deadmines |     170 |       66 |     49 |     26 |          29 |
 
 ## API reference
 
