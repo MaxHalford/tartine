@@ -22,7 +22,7 @@
 
 Exporting a dataframe to a spreadsheet is trivial. But this results in a flat and static spreadsheet where the cells are not linked with each other. This is what this tool addresses: it allows you to programmatically generate dynamic spreadsheets with arbitrary layouts.
 
-This tool also allows to do things the other way round: flatten a dataframe with an arbitrary layout into a flat dataframe.
+This tool also allows to do things the other way round: convert a dataframe with an arbitrary layout into a flat dataframe.
 
 ## Installation
 
