@@ -8,9 +8,11 @@
   - [Spreading a dataframe](#spreading-a-dataframe)
   - [Linking more cells](#linking-more-cells)
   - [Cell formatting](#cell-formatting)
+  - [Unspreading a dataframe](#unspreading-a-dataframe)
 - [API reference](#api-reference)
   - [`spread`](#spread)
   - [`spread_dataframe`](#spread_dataframe)
+  - [`unspread_dataframe`](#unspread_dataframe)
 - [Supported flavors](#supported-flavors)
 - [A note on spreadsheets](#a-note-on-spreadsheets)
 - [Development](#development)
@@ -52,7 +54,7 @@ for col in ['Set name', 'Release date']:
 card_sets = card_sets[1:-1]
 card_sets = card_sets[::-1]  # latest to oldest
 
-print(card_sets.head())
+print(card_sets.head().to_markdown(index=False))
 ```
 
 | Set name                                          | Release type   | Release date      | Removal date from Standard   |   Total |   Common |   Rare |   Epic |   Legendary |
@@ -254,6 +256,44 @@ wks.update_cells(cells)
     <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=1836554356">👀 See the result ✨</a></h4>
 </div>
 
+### Unspreading a dataframe
+
+There's also way to "unspread" a structured sheet into a flat dataframe. We'll take the last version we created as an example.
+
+```py
+v4 = sh.worksheet_by_title('v4').get_as_df(start='A1')
+print(v4.head(8).to_markdown(index=False))
+```
+
+| Set name                           | Rarity    |   Count | Share   | Total   |
+|:-----------------------------------|:----------|--------:|:--------|:--------|
+| Fractured in Alterac Valley        | Common    |      50 | 37.04%  | 135     |
+|                                    | Rare      |      35 | 25.93%  |         |
+|                                    | Epic      |      24 | 17.78%  |         |
+|                                    | Legendary |      26 | 19.26%  |         |
+| United in Stormwind with Deadmines | Common    |      66 | 38.82%  | 170     |
+|                                    | Rare      |      49 | 28.82%  |         |
+|                                    | Epic      |      26 | 15.29%  |         |
+|                                    | Legendary |      29 | 17.06%  |         |
+
+
+This dataframe can be flattened by providing a template to the `unspread_dataframe` pattern. This keys of this template are the column names of the input dataframe. The values are sequences with variable names. Each variable will correspond to a column in the output dataframe.
+
+```py
+template = {
+    'Set name': ('set_name',),
+    'Count': ('common', 'rare', 'epic', 'legendary')
+}
+
+v4_flat = tartine.unspread_dataframe(template, v4)
+print(v4_flat.head(2).to_markdown(index=False))
+```
+
+| set_name                           |   common |   rare |   epic |   legendary |
+|:-----------------------------------|---------:|-------:|-------:|------------:|
+| Fractured in Alterac Valley        |       50 |     35 |     24 |          26 |
+| United in Stormwind with Deadmines |       66 |     49 |     26 |          29 |
+
 ## API reference
 
 ### `spread`
@@ -308,6 +348,29 @@ Spread a dataframe into cells.
     -------
     cells
         The list of cells.
+<BLANKLINE>
+<BLANKLINE>
+
+```
+
+### `unspread_dataframe`
+
+```py
+>>> print(tartine.unspread_dataframe.__doc__)
+Unspread a dataframe into a flat dataframe.
+<BLANKLINE>
+    Parameters
+    ----------
+    template
+        A list of expressions which determines how the cells are layed out.
+    df
+        A dataframe to unspread. Typically this may be the output of the `spread` function once
+        it has been dumped into a sheet.
+<BLANKLINE>
+    Returns
+    -------
+    flat_df
+        The flattened dataframe.
 <BLANKLINE>
 <BLANKLINE>
 

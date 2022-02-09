@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 
-__all__ = ["spread", "spread_dataframe"]
+__all__ = ["spread", "spread_dataframe", "unspread_dataframe"]
 
 
 class Flavor(enum.Enum):
@@ -261,3 +261,44 @@ def spread_dataframe(
         nrows += _nrows
 
     return cells
+
+
+def unspread_dataframe(template: Template, df: "pd.DataFrame") -> "pd.DataFrame":
+    """Unspread a dataframe into a flat dataframe.
+
+    Parameters
+    ----------
+    template
+        A list of expressions which determines how the cells are layed out.
+    df
+        A dataframe to unspread. Typically this may be the output of the `spread` function once
+        it has been dumped into a sheet.
+
+    Returns
+    -------
+    flat_df
+        The flattened dataframe.
+
+    """
+
+    import pandas as pd
+
+    n_rows_in_template = max(
+        1 if isinstance(col, str) else len(col) for col in template.values()
+    )
+
+    flat_rows = []
+
+    for k in range(n_rows_in_template, len(df), n_rows_in_template):
+
+        group = df[k - n_rows_in_template : k]
+
+        flat_rows.append(
+            {
+                var: group[col].iloc[i]
+                for col, variables in template.items()
+                for i, var in enumerate(variables)
+            }
+        )
+
+    return pd.DataFrame(flat_rows)

@@ -13,6 +13,7 @@ pytest = "^6.2.5"
 pygsheets = "^2.0.5"
 pandas = "^1.4.0"
 lxml = "^4.7.1"
+tabulate = "^0.8.9"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
