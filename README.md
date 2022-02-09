@@ -392,7 +392,7 @@ pygsheets
 
 ## A note on spreadsheets
 
-I always thought spreadsheets sucked. I still think they do in many cases. But they definitely fit the bill for some tasks. This was very much true when I worked at [Alan](https://alan.com/). They really shine when you need to build an interactive app, but can't afford to spend engineering resources. One might even go as far to say that they're underrated. Let me quote [this](https://news.ycombinator.com/item?id=29104047#29108603) Hackernews comment:
+I always thought spreadsheets sucked. I still think they do in many cases. But they definitely fit the bill for some tasks. This was very much true when I worked at [Alan](https://alan.com/). Likewise at [Carbonfact](https://www.carbonfact.com/). They really shine when you need to build an interactive app, but can't afford to spend engineering resources. One might even go as far to say that they're underrated. Let me quote [this](https://news.ycombinator.com/item?id=29104047#29108603) Hackernews comment:
 
 > > I've mentioned that programmers are far too dismissive of MS Excel. You can achieve a awful lot with Excel: more, even, than some programmers can achieve without it
 >
