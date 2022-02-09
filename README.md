@@ -283,7 +283,8 @@ This dataframe can be flattened by providing a template to the `unspread_datafra
 
 ```py
 template = {
-    'Set name': ('set_name',),
+    'Set name': ('set_name', '', '', ''),
+    'Total': ('total',),  # same but shorter
     'Count': ('common', 'rare', 'epic', 'legendary')
 }
 
@@ -291,10 +292,10 @@ v4_flat = tartine.unspread_dataframe(template, v4)
 print(v4_flat.head(2).to_markdown(index=False))
 ```
 
-| set_name                           |   common |   rare |   epic |   legendary |
-|:-----------------------------------|---------:|-------:|-------:|------------:|
-| Fractured in Alterac Valley        |       50 |     35 |     24 |          26 |
-| United in Stormwind with Deadmines |       66 |     49 |     26 |          29 |
+| set_name                           |    |   total |   common |   rare |   epic |   legendary |
+|:-----------------------------------|:---|--------:|---------:|-------:|-------:|------------:|
+| Fractured in Alterac Valley        |    |     135 |       50 |     35 |     24 |          26 |
+| United in Stormwind with Deadmines |    |     170 |       66 |     49 |     26 |          29 |
 
 ## API reference
 
