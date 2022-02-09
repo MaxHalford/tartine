@@ -247,8 +247,6 @@ cells = tartine.spread_dataframe(
     postprocess=stylize
 )
 
-for cell in cells:
-
 wks = sh.worksheet_by_title('v4')
 wks.clear()
 wks.update_cells(cells)
