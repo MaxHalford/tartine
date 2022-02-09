@@ -61,11 +61,11 @@ print(card_sets.head().to_markdown(index=False))
 
 | Set name                                          | Release type   | Release date      | Removal date from Standard   |   Total |   Common |   Rare |   Epic |   Legendary |
 |:--------------------------------------------------|:---------------|:------------------|:-----------------------------|--------:|---------:|-------:|-------:|------------:|
-| United in Stormwind                               | Expansion      | August 3, 2021    | TBA 2023                     |     135 |       50 |     35 |     25 |          25 |
+| Fractured in Alterac Valley                       | Expansion      | December 7, 2021  | TBA 2023                     |     135 |       50 |     35 |     24 |          26 |
+| United in Stormwind with Deadmines                | Expansion      | August 3, 2021    | TBA 2023                     |     170 |       66 |     49 |     26 |          29 |
 | Forged in the Barrens with Wailing Caverns        | Expansion      | March 30, 2021    | TBA 2023                     |     170 |       66 |     49 |     26 |          29 |
 | Core 2021 (Core)                                  | Core           | March 30, 2021    | TBA 2022                     |     235 |      128 |     55 |     27 |          25 |
 | Madness at the Darkmoon Faire with Darkmoon Races | Expansion      | November 17, 2020 | TBA 2022                     |     170 |       70 |     46 |     25 |          29 |
-| Scholomance Academy (Scholomance)                 | Expansion      | August 6, 2020    | TBA 2022                     |     135 |       52 |     35 |     23 |          25 |
 
 ### Getting started
 
@@ -205,9 +205,7 @@ Now you should see the cell values update automatically when you modify any of t
 
 The sheet we have displays the data correctly and the cells are linked with each other. Yipee. However, it's a bit ugly, and it would be nice to also format the cells programmatically. Indeed, readability would be improved by adding some colors and formatting the percentages.
 
-First of all there is a `postprocess` parameter that allows to do any kind of transformation to each cell once it has been created. This can be used to pass a `stylize` function which applies the adequate modifications.
-
-Secondly you can do whatever you want to the returned cells. Here we will check the row number of all the cells and shade them accordingly. We'll also bolden the font of the cells in first row.
+There is a `postprocess` parameter that allows to do any kind of transformation to each cell once it has been created. This can be used to pass a `stylize` function which applies the adequate modifications.
 
 ```py
 GRAY = (245 / 255, 245 / 255, 250 / 255, 1)
@@ -216,6 +214,14 @@ PURPLE = (191 / 255, 0 / 255, 255 / 255, 1)
 ORANGE = (255 / 255, 140 / 255, 0 / 255, 1)
 
 def stylize(cell, name):
+
+    # Bolden the header
+    if cell.row == 1:
+        cell.set_text_format('bold', True)
+
+    # Shade every group of 4 rows
+    if any(cell.row % 8 - r == 0 for r in (2, 3, 4, 5)):
+        cell.color = GRAY
 
     # Format percentages
     if name and 'share' in name:
@@ -242,12 +248,6 @@ cells = tartine.spread_dataframe(
 )
 
 for cell in cells:
-    # Bolden the header
-    if cell.row == 1:
-        cell.set_text_format('bold', True)
-    # Shade every group of 4 rows
-    if any(cell.row % 8 - r == 0 for r in (2, 3, 4, 5)):
-        cell.color = GRAY
 
 wks = sh.worksheet_by_title('v4')
 wks.clear()
