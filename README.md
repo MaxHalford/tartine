@@ -1,4 +1,26 @@
-<h1>🍞 tartine</h1>
+
+
+<div align="center">
+  <h1>🍞 tartine</h1>
+  <p>Manipulate dynamic spreadsheets with arbitrary layouts using Python.</p>
+</div>
+<br>
+
+<div align="center">
+  <!-- Tests -->
+  <a href="https://github.com/MaxHalford/tartine/actions/workflows/unit-tests.yml">
+    <img src="https://github.com/MaxHalford/tartine/actions/workflows/unit-tests.yml/badge.svg?style=flat-square" alt="unit-tests">
+  </a>
+  <!-- PyPI -->
+  <a href="https://pypi.org/project/tartine">
+    <img src="https://img.shields.io/pypi/v/tartine.svg?label=release&color=blue&style=flat-square" alt="pypi">
+  </a>
+  <!-- License -->
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="license">
+  </a>
+</div>
+<br>
 
 - [What this is](#what-this-is)
 - [Installation](#installation)
