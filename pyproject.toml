@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tartine"
-version = "0.3.2"
+version = "0.3.3"
 description = "Create dynamic spreadsheets using Python"
 authors = ["MaxHalford <maxhalford25@gmail.com>"]
 license = "MIT"
