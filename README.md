@@ -305,7 +305,7 @@ This dataframe can be flattened by providing a template to the `unspread_datafra
 ```py
 template = {
     'Set name': ('set_name', '', '', ''),
-    'Total': ('total',),  # same but shorter
+    'Total': 'total',  # same, but shorter
     'Count': ('common', 'rare', 'epic', 'legendary')
 }
 

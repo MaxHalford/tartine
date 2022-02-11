@@ -183,6 +183,9 @@ def _bake_expression(
     >>> _bake_expression(expr, data)
     '3 * x + 8'
 
+    An exception is raised if a variable can't be found. Alternatively, you can also set a default
+    value in case this happens.
+
     >>> _bake_expression('@foo', data, replace_missing_with='bar')
     'bar'
 
@@ -255,7 +258,7 @@ def spread(
     table = [
         [
             _Cell(r + start_at, c, _normalize_expression(expr))
-            for r, expr in enumerate([col] if isinstance(col, str) else col)
+            for r, expr in enumerate([col] if isinstance(col, Expr) else col)
         ]
         for c, col in enumerate(template)
     ]
@@ -363,7 +366,7 @@ def unspread_dataframe(template: Template, df: "pd.DataFrame") -> "pd.DataFrame"
     import pandas as pd
 
     n_rows_in_template = max(
-        1 if isinstance(col, str) else len(col) for col in template.values()
+        1 if isinstance(col, Expr) else len(col) for col in template.values()
     )
 
     flat_rows = []
@@ -376,7 +379,7 @@ def unspread_dataframe(template: Template, df: "pd.DataFrame") -> "pd.DataFrame"
             {
                 var: group[col_name].iloc[i]
                 for col_name, col in template.items()
-                for i, var in enumerate([col] if isinstance(col, str) else col)
+                for i, var in enumerate([col] if isinstance(col, Expr) else col)
                 if var
             }
         )
