@@ -129,10 +129,12 @@ class _Cell:
         """
         return f"{_column_letter(self.c)}{self.r + 1}"
 
-    def as_pygsheets(self, data: dict) -> "pygsheets.Cell":
+    def as_pygsheets(
+        self, data: dict, replace_missing_with: Optional[str] = None
+    ) -> "pygsheets.Cell":
         import pygsheets
 
-        expr = _bake_expression(self.expr, data)
+        expr = _bake_expression(self.expr, data, replace_missing_with)
         cell = pygsheets.Cell(pos=self.address, val=expr)
 
         if _is_formula(expr):
@@ -141,7 +143,9 @@ class _Cell:
         return cell
 
 
-def _bake_expression(expr: Expr, data: dict) -> StrExpr:
+def _bake_expression(
+    expr: Expr, data: dict, replace_missing_with: Optional[str] = None
+) -> StrExpr:
     """
 
     >>> _bake_expression('@a * x + @b', {'a': '3', 'b': '8'})
@@ -187,6 +191,14 @@ def _bake_expression(expr: Expr, data: dict) -> StrExpr:
     str_expr = expr
 
     # Replace variables
+    def replace(match: re.Match) -> str:
+        try:
+            return str(glom(data, m.group("name")))
+        except glom.core.PathAccessError as e:
+            if replace_missing_with is not None:
+                return replace_missing_with
+            raise e
+
     pattern = r"@(?P<name>(\w|\.)+)"
     pattern_single_quotes = r"@'(?P<name>(\w|\.)+)'"
     pattern_double_quotes = r'@"(?P<name>(\w|\.)+)"'
@@ -206,6 +218,7 @@ def spread(
     flavor: Flavor,
     postprocess: Optional[Callable] = None,
     start_at: int = 0,
+    replace_missing_with: Optional[str] = None,
 ) -> Tuple[List[Union["pygsheets.Cell"]], int]:
     """Spread data into cells.
 
@@ -221,6 +234,9 @@ def spread(
         An optional function to call for each cell once it has been created.
     start_at
         The row number where the layout begins. Zero-based.
+    replace_missing_with
+        An optional value to be used when a variable isn't found in the data. An exception is
+        raised if a variable is not found and this is not specified.
 
     Returns
     -------
@@ -256,7 +272,11 @@ def spread(
                 cell_names[len(cell_names)] = None
 
     if flavor == Flavor.PYGSHEETS.value:
-        cells = [cell.as_pygsheets(data=data) for col in table for cell in col]
+        cells = [
+            cell.as_pygsheets(data=data, replace_missing_with=replace_missing_with)
+            for col in table
+            for cell in col
+        ]
     else:
         raise ValueError(
             f"Unknown flavor {flavor}. Available options: {', '.join(f.value for f in Flavor)}"
@@ -276,6 +296,7 @@ def spread_dataframe(
     df: "pd.DataFrame",
     flavor: Flavor,
     postprocess: Optional[Callable] = None,
+    replace_missing_with: Optional[str] = None,
 ) -> List[Union["pygsheets.Cell"]]:
     """Spread a dataframe into cells.
 
@@ -289,6 +310,9 @@ def spread_dataframe(
         Determines what kind of cells to generate.
     postprocess
         An optional function to call for each cell once it has been created.
+    replace_missing_with
+        An optional value to be used when a variable isn't found in the data. An exception is
+        raised if a variable is not found and this is not specified.
 
     Returns
     -------
@@ -306,6 +330,7 @@ def spread_dataframe(
             start_at=nrows,
             flavor=flavor,
             postprocess=postprocess,
+            replace_missing_with=replace_missing_with,
         )
 
         cells += _cells
