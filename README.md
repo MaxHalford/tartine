@@ -97,13 +97,13 @@ You use `tartine` by specifying how you want to spread your data with a template
 ```py
 template = {
     'Set name': "@'Set name'",
-    'Rarity': ('Common', 'Rare', 'Epic', 'Legendary'),
-    'Count': (
+    'Rarity': ['Common', 'Rare', 'Epic', 'Legendary'],
+    'Count': [
         '@Common',
         '@Rare',
         '@Epic',
         '@Legendary',
-    ),
+    ],
     'Share': (
         '= @Common / @total',
         '= @Rare / @total',
@@ -191,19 +191,19 @@ The spreadsheet we built displays the data in a static manner. The share of each
 ```py
 template = {
     'Set name': "@'Set name'",
-    'Rarity': ('Common', 'Rare', 'Epic', 'Legendary'),
-    'Count': (
+    'Rarity': ['Common', 'Rare', 'Epic', 'Legendary'],
+    'Count': [
         'common = @Common',
         'rare = @Rare',
         'epic = @Epic',
         'legendary = @Legendary',
-    ),
-    'Share': (
+    ],
+    'Share': [
         '= @common / @total',
         '= @rare / @total',
         '= @epic / @total',
         '= @legendary / @total'
-    ),
+    ],
     'Total': 'total = @common + @rare + @epic + @legendary'
 }
 
@@ -304,9 +304,9 @@ This dataframe can be flattened by providing a template to the `unspread_datafra
 
 ```py
 template = {
-    'Set name': ('set_name', '', '', ''),
+    'Set name': ['set_name', '', '', ''],
     'Total': 'total',  # same, but shorter
-    'Count': ('common', 'rare', 'epic', 'legendary')
+    'Count': ['common', 'rare', 'epic', 'legendary']
 }
 
 v4_flat = tartine.unspread_dataframe(template, v4)
@@ -337,19 +337,19 @@ Under the hood, `tartine` uses the [`glom` library](https://glom.readthedocs.io/
 
 ```py
 template = {
-    'Rarity': ('Common', 'Rare', 'Epic', 'Legendary'),
-    'Count': (
+    'Rarity': ['Common', 'Rare', 'Epic', 'Legendary'],
+    'Count': [
         'common = @rarity.common',
         'rare = @rarity.rare',
         'epic = @rarity.epic',
         'legendary = @rarity.legendary',
-    ),
-    'Share': (
+    ],
+    'Share': [
         '= @common / @total',
         '= @rare / @total',
         '= @epic / @total',
         '= @legendary / @total'
-    ),
+    ],
     'Total': 'total = @common + @rare + @epic + @legendary'
 }
 

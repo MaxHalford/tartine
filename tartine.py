@@ -94,7 +94,7 @@ def _is_named_formula(expr: str) -> bool:
     return bool(re.match(r"[\w_\.]+ = ", expr))
 
 
-def _normalize_expression(expr: str) -> str:
+def _normalize_expression(expr: Expr) -> Expr:
     """
 
     >>> _normalize_expression(" 1")
@@ -104,7 +104,9 @@ def _normalize_expression(expr: str) -> str:
     'foo = 2 * 3'
 
     """
-    return re.sub(r"\s+", " ", expr).strip()
+    if isinstance(expr, StrExpr):
+        return re.sub(r"\s+", " ", expr).strip()
+    return expr
 
 
 @dataclass
@@ -258,7 +260,7 @@ def spread(
     table = [
         [
             _Cell(r + start_at, c, _normalize_expression(expr))
-            for r, expr in enumerate([col] if isinstance(col, Expr) else col)
+            for r, expr in enumerate(col if isinstance(col, list) else [col])
         ]
         for c, col in enumerate(template)
     ]
@@ -268,7 +270,9 @@ def spread(
     cell_names = {}
     for c, col in enumerate(table):
         for r, cell in enumerate(col):
-            if _is_named_formula(cell.expr):
+            if callable(cell.expr):
+                cell_names[len(cell_names)] = None
+            elif _is_named_formula(cell.expr):
                 name = cell.expr.split(" = ")[0]
                 data[name] = cell.address
                 cell_names[len(cell_names)] = name
@@ -366,7 +370,7 @@ def unspread_dataframe(template: Template, df: "pd.DataFrame") -> "pd.DataFrame"
     import pandas as pd
 
     n_rows_in_template = max(
-        1 if isinstance(col, Expr) else len(col) for col in template.values()
+        len(col) if isinstance(col, list) else 1 for col in template.values()
     )
 
     flat_rows = []
@@ -379,7 +383,7 @@ def unspread_dataframe(template: Template, df: "pd.DataFrame") -> "pd.DataFrame"
             {
                 var: group[col_name].iloc[i]
                 for col_name, col in template.items()
-                for i, var in enumerate([col] if isinstance(col, Expr) else col)
+                for i, var in enumerate(col if isinstance(col, list) else [col])
                 if var
             }
         )
