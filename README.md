@@ -324,11 +324,11 @@ Your data might be nested when you're using the `spread` function. For instance:
 
 ```py
 data = {
-    "rarity" {
-        "common": 50,
-        "rare": 35,
-        "epic": 24,
-        "legendary": 26
+    'rarity': {
+        'common': 50,
+        'rare': 35,
+        'epic': 24,
+        'legendary': 26
     }
 }
 ```
@@ -353,7 +353,7 @@ template = {
     'Total': 'total = @common + @rare + @epic + @legendary'
 }
 
-cells, nrows = tartine.spread(template.values(), data, flavor="pygsheets")
+cells, nrows = tartine.spread(template.values(), data, flavor='pygsheets')
 ```
 
 In case string expressions are not enough, you can also pass a function which takes as input the data.
@@ -368,7 +368,7 @@ template = {
     }
 }
 
-cells, nrows = tartine.spread(template.values(), data, flavor="pygsheets")
+cells, nrows = tartine.spread(template.values(), data, flavor='pygsheets')
 ```
 
 ## API reference
