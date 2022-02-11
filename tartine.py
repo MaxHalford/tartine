@@ -3,7 +3,7 @@ import re
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-from glom import glom
+import glom
 
 
 __all__ = ["spread", "spread_dataframe", "unspread_dataframe"]
@@ -203,7 +203,9 @@ def _bake_expression(
     pattern_single_quotes = r"@'(?P<name>(\w|\.)+)'"
     pattern_double_quotes = r'@"(?P<name>(\w|\.)+)"'
     for pattern in [pattern, pattern_single_quotes, pattern_double_quotes]:
-        str_expr = re.sub(pattern, lambda m: str(glom(data, m.group("name"))), str_expr)
+        str_expr = re.sub(
+            pattern, lambda m: str(glom.glom(data, m.group("name"))), str_expr
+        )
 
     # Remove names from named variables
     for pattern in [r"'.+' = ", r"\w+ = "]:
