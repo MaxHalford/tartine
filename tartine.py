@@ -3,6 +3,8 @@ import re
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
+from glom import glom
+
 
 __all__ = ["spread", "spread_dataframe", "unspread_dataframe"]
 
@@ -11,7 +13,10 @@ class Flavor(enum.Enum):
     PYGSHEETS = "pygsheets"
 
 
-Template = Dict[str, Union[str, Tuple[str, ...]]]
+StrExpr = str
+FuncExpr = Callable[[dict], StrExpr]
+Expr = Union[StrExpr, FuncExpr]
+Template = Dict[str, Union[Expr, Tuple[Expr, ...]]]
 
 
 def _column_letter(n: int) -> str:
@@ -124,7 +129,7 @@ class _Cell:
         """
         return f"{_column_letter(self.c)}{self.r + 1}"
 
-    def as_pygsheets(self, data) -> "pygsheets.Cell":
+    def as_pygsheets(self, data: dict) -> "pygsheets.Cell":
         import pygsheets
 
         expr = _bake_expression(self.expr, data)
@@ -136,17 +141,63 @@ class _Cell:
         return cell
 
 
-def _bake_expression(expr: str, data: dict) -> str:
+def _bake_expression(expr: Expr, data: dict) -> StrExpr:
+    """
+
+    >>> _bake_expression('@a * x + @b', {'a': '3', 'b': '8'})
+    '3 * x + 8'
+
+    Values don't have to be strings.
+
+    >>> _bake_expression('@a * x + @b', {'a': 3, 'b': 8})
+    '3 * x + 8'
+
+    Nested values can be handled via glom's syntax.
+
+    >>> data = {'coeffs': {'a': 3, 'b': 8}}
+    >>> _bake_expression('@coeffs.a * x + @coeffs.b', data)
+    '3 * x + 8'
+
+    This also works for formulas.
+
+    >>> data = {
+    ...     "rarity": {
+    ...         "common": 50,
+    ...         "rare": 35,
+    ...         "epic": 24,
+    ...         "legendary": 26
+    ...     }
+    ... }
+    >>> expr = "@rarity.common + @rarity.rare + @rarity.epic + @rarity.legendary"
+    >>> _bake_expression(expr, data)
+    '50 + 35 + 24 + 26'
+
+    You can also use arbitrary functions if string expressions are not enough.
+
+    >>> data = {'a': 3, 'b': 8}
+    >>> expr = lambda x: f"{x['a']} * x + {x['b']}"
+    >>> _bake_expression(expr, data)
+    '3 * x + 8'
+
+    """
+
+    if callable(expr):
+        return expr(data)
+
+    str_expr = expr
 
     # Replace variables
-    for pattern in [r"@'(?P<name>.+)'", r"@(?P<name>\w+)"]:
-        expr = re.sub(pattern, lambda m: data[m.group("name")], expr)
+    pattern = r"@(?P<name>(\w|\.)+)"
+    pattern_single_quotes = r"@'(?P<name>(\w|\.)+)'"
+    pattern_double_quotes = r'@"(?P<name>(\w|\.)+)"'
+    for pattern in [pattern, pattern_single_quotes, pattern_double_quotes]:
+        str_expr = re.sub(pattern, lambda m: str(glom(data, m.group("name"))), str_expr)
 
     # Remove names from named variables
     for pattern in [r"'.+' = ", r"\w+ = "]:
-        expr = re.sub(pattern, "= ", expr)
+        str_expr = re.sub(pattern, "= ", str_expr)
 
-    return expr
+    return str_expr
 
 
 def spread(
@@ -295,9 +346,9 @@ def unspread_dataframe(template: Template, df: "pd.DataFrame") -> "pd.DataFrame"
 
         flat_rows.append(
             {
-                var: group[col].iloc[i]
-                for col, variables in template.items()
-                for i, var in enumerate(variables)
+                var: group[col_name].iloc[i]
+                for col_name, col in template.items()
+                for i, var in enumerate([col] if isinstance(col, str) else col)
                 if var
             }
         )
