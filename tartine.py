@@ -183,6 +183,9 @@ def _bake_expression(
     >>> _bake_expression(expr, data)
     '3 * x + 8'
 
+    >>> _bake_expression('@foo', data, replace_missing_with='bar')
+    'bar'
+
     """
 
     if callable(expr):
@@ -193,8 +196,8 @@ def _bake_expression(
     # Replace variables
     def replace(match: re.Match) -> str:
         try:
-            return str(glom(data, m.group("name")))
-        except glom.core.PathAccessError as e:
+            return str(glom.glom(data, match.group("name")))
+        except KeyError as e:
             if replace_missing_with is not None:
                 return replace_missing_with
             raise e
@@ -203,9 +206,7 @@ def _bake_expression(
     pattern_single_quotes = r"@'(?P<name>(\w|\.)+)'"
     pattern_double_quotes = r'@"(?P<name>(\w|\.)+)"'
     for pattern in [pattern, pattern_single_quotes, pattern_double_quotes]:
-        str_expr = re.sub(
-            pattern, lambda m: str(glom.glom(data, m.group("name"))), str_expr
-        )
+        str_expr = re.sub(pattern, replace, str_expr)
 
     # Remove names from named variables
     for pattern in [r"'.+' = ", r"\w+ = "]:

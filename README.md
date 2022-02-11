@@ -392,6 +392,9 @@ Spread data into cells.
         An optional function to call for each cell once it has been created.
     start_at
         The row number where the layout begins. Zero-based.
+    replace_missing_with
+        An optional value to be used when a variable isn't found in the data. An exception is
+        raised if a variable is not found and this is not specified.
 <BLANKLINE>
     Returns
     -------
@@ -420,6 +423,9 @@ Spread a dataframe into cells.
         Determines what kind of cells to generate.
     postprocess
         An optional function to call for each cell once it has been created.
+    replace_missing_with
+        An optional value to be used when a variable isn't found in the data. An exception is
+        raised if a variable is not found and this is not specified.
 <BLANKLINE>
     Returns
     -------
