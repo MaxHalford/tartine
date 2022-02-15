@@ -16,7 +16,15 @@ class Flavor(enum.Enum):
 StrExpr = str
 FuncExpr = Callable[[dict], StrExpr]
 Expr = Union[StrExpr, FuncExpr]
-Template = Dict[str, Union[Expr, Tuple[Expr, ...]]]
+Note = Expr
+ExprWithNote = Tuple[Expr, Note]
+Template = Dict[
+    str,
+    Union[
+        Union[Expr, ExprWithNote],
+        List[Union[Expr, ExprWithNote]],
+    ],
+]
 
 
 def _column_letter(n: int) -> str:
@@ -120,6 +128,7 @@ class _Cell:
     r: int
     c: int
     expr: str
+    note: Optional[str] = None
 
     @property
     def address(self) -> str:
@@ -147,6 +156,9 @@ class _Cell:
 
         if _is_formula(expr):
             cell.formula = expr
+
+        if self.note is not None:
+            cell.note = _bake_expression(self.note, data)
 
         return cell
 
@@ -213,12 +225,12 @@ def _bake_expression(
     >>> data = {
     ...     "rarity": {
     ...         "common": 50,
-    ...         "rare": 35,
+    ...         "rare cards": 35,
     ...         "epic": 24,
     ...         "legendary": 26
     ...     }
     ... }
-    >>> expr = "@rarity.common + @rarity.rare + @rarity.epic + @rarity.legendary"
+    >>> expr = "@rarity.common + @rarity.rare cards + @rarity.epic + @rarity.legendary"
     >>> _bake_expression(expr, data)
     '50 + 35 + 24 + 26'
 
@@ -286,13 +298,19 @@ def spread(
 
     data = data or {}
 
-    table = [
-        [
-            _Cell(r + start_at, c, _normalize_expression(expr))
-            for r, expr in enumerate(col if isinstance(col, list) else [col])
-        ]
-        for c, col in enumerate(template)
-    ]
+    # Unpack the template
+    table = []
+    for c, col in enumerate(template):
+        cells = []
+        for r, expr in enumerate(col if isinstance(col, list) else [col]):
+            note = None
+            if isinstance(expr, tuple):
+                expr, note = expr
+            cell = _Cell(
+                r=r + start_at, c=c, expr=_normalize_expression(expr), note=note
+            )
+            cells.append(cell)
+        table.append(cells)
 
     # We're going to add the positions of the named variables to the data
     data = data.copy()

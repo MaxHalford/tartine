@@ -326,7 +326,7 @@ Your data might be nested when you're using the `spread` function. For instance:
 data = {
     'rarity': {
         'common': 50,
-        'rare': 35,
+        'rare cards': 35,
         'epic': 24,
         'legendary': 26
     }
@@ -340,7 +340,7 @@ template = {
     'Rarity': ['Common', 'Rare', 'Epic', 'Legendary'],
     'Count': [
         'common = @rarity.common',
-        'rare = @rarity.rare',
+        'rare = @rarity.rare cards',  # note the space
         'epic = @rarity.epic',
         'legendary = @rarity.legendary',
     ],
