@@ -104,12 +104,12 @@ template = {
         '@Epic',
         '@Legendary',
     ],
-    'Share': (
+    'Share': [
         '= @Common / @total',
         '= @Rare / @total',
         '= @Epic / @total',
         '= @Legendary / @total'
-    ),
+    ],
     'Total': 'total = @Common + @Rare + @Epic + @Legendary'
 }
 ```

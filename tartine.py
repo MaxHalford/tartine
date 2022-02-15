@@ -55,6 +55,12 @@ def _is_variable(expr: str) -> bool:
     >>> _is_variable("@foo")
     True
 
+    >>> _is_variable("@foo bar")
+    True
+
+    >>> _is_variable("@foo bar.foo.bar")
+    True
+
     """
     return expr.startswith("@")
 
@@ -145,6 +151,44 @@ class _Cell:
         return cell
 
 
+def _replace_variables(
+    str_expr: StrExpr, data: dict, replace_missing_with: Optional[str] = None
+):
+    """
+
+    >>> _replace_variables('@foo', {'foo': 42})
+    '42'
+
+    >>> _replace_variables('2 * @foo', {'foo': 42})
+    '2 * 42'
+
+    >>> _replace_variables('2 * @foo bar', {'foo bar': 42})
+    '2 * 42'
+
+    >>> _replace_variables('2 * @foo bar - @foo bar', {'foo bar': 42})
+    '2 * 42 - 42'
+
+    >>> _replace_variables(
+    ...     '2 * @duh - @baz.foo bar',
+    ...     {'baz': {'foo bar': 42}},
+    ...     replace_missing_with=10
+    ... )
+    '2 * 10 - 42'
+
+    """
+
+    def replace(match: re.Match) -> str:
+        try:
+            return str(glom.glom(data, match.group("glom_spec")))
+        except KeyError as e:
+            if replace_missing_with is not None:
+                return str(replace_missing_with)
+            raise e
+
+    pattern = r"@(?P<glom_spec>[\w\s\.]*\w)"
+    return re.sub(pattern, replace, str_expr)
+
+
 def _bake_expression(
     expr: Expr, data: dict, replace_missing_with: Optional[str] = None
 ) -> StrExpr:
@@ -196,22 +240,7 @@ def _bake_expression(
     if callable(expr):
         return expr(data)
 
-    str_expr = expr
-
-    # Replace variables
-    def replace(match: re.Match) -> str:
-        try:
-            return str(glom.glom(data, match.group("name")))
-        except KeyError as e:
-            if replace_missing_with is not None:
-                return replace_missing_with
-            raise e
-
-    pattern = r"@(?P<name>(\w|\.)+)"
-    pattern_single_quotes = r"@'(?P<name>(\w|\.)+)'"
-    pattern_double_quotes = r'@"(?P<name>(\w|\.)+)"'
-    for pattern in [pattern, pattern_single_quotes, pattern_double_quotes]:
-        str_expr = re.sub(pattern, replace, str_expr)
+    str_expr = _replace_variables(expr, data, replace_missing_with=replace_missing_with)
 
     # Remove names from named variables
     for pattern in [r"'.+' = ", r"\w+ = "]:
