@@ -1,7 +1,7 @@
 import enum
 import re
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import glom
 
@@ -147,11 +147,19 @@ class _Cell:
         return f"{_column_letter(self.c)}{self.r + 1}"
 
     def as_pygsheets(
-        self, data: dict, replace_missing_with: Optional[str] = None
+        self,
+        data: Any,
+        named_variables: dict,
+        replace_missing_with: Optional[str] = None,
     ) -> "pygsheets.Cell":
         import pygsheets
 
-        expr = _bake_expression(self.expr, data, replace_missing_with)
+        expr = _bake_expression(
+            expr=self.expr,
+            data=data,
+            named_variables=named_variables,
+            replace_missing_with=replace_missing_with,
+        )
         cell = pygsheets.Cell(pos=self.address, val=expr)
 
         if _is_formula(expr):
@@ -164,7 +172,10 @@ class _Cell:
 
 
 def _replace_variables(
-    str_expr: StrExpr, data: dict, replace_missing_with: Optional[str] = None
+    str_expr: StrExpr,
+    data: Any,
+    named_variables: Optional[dict] = None,
+    replace_missing_with: Optional[str] = None,
 ):
     """
 
@@ -191,7 +202,10 @@ def _replace_variables(
 
     def replace(match: re.Match) -> str:
         try:
-            return str(glom.glom(data, match.group("glom_spec")))
+            try:
+                return str(glom.glom(data, match.group("glom_spec")))
+            except KeyError:
+                return str(glom.glom(named_variables or {}, match.group("glom_spec")))
         except KeyError as e:
             if replace_missing_with is not None:
                 return str(replace_missing_with)
@@ -202,7 +216,10 @@ def _replace_variables(
 
 
 def _bake_expression(
-    expr: Expr, data: dict, replace_missing_with: Optional[str] = None
+    expr: Expr,
+    data: Any,
+    named_variables: Optional[dict] = None,
+    replace_missing_with: Optional[str] = None,
 ) -> StrExpr:
     """
 
@@ -247,12 +264,28 @@ def _bake_expression(
     >>> _bake_expression('@foo', data, replace_missing_with='bar')
     'bar'
 
+    Baking expressions also works with dataclasses.
+
+    >>> from dataclasses import dataclass
+    >>> @dataclass
+    ... class Foo:
+    ...     a: int
+
+    >>> foo = Foo(3)
+    >>> _bake_expression('@a * x + 8', foo)
+    '3 * x + 8'
+
     """
 
     if callable(expr):
         return expr(data)
 
-    str_expr = _replace_variables(expr, data, replace_missing_with=replace_missing_with)
+    str_expr = _replace_variables(
+        str_expr=expr,
+        data=data,
+        named_variables=named_variables or {},
+        replace_missing_with=replace_missing_with,
+    )
 
     # Remove names from named variables
     for pattern in [r"'.+' = ", r"\w+ = "]:
@@ -263,7 +296,7 @@ def _bake_expression(
 
 def spread(
     template: Template,
-    data: Optional[Dict],
+    data: Optional[Any],
     flavor: Flavor,
     postprocess: Optional[Callable] = None,
     start_at: int = 0,
@@ -276,7 +309,8 @@ def spread(
     template
         A list of expressions which determines how the cells are layed out.
     data
-        A dictionary of data to render.
+        Data to render. Can be a dictionary, a dataclass, a list; just as long as the template
+        expressions can be applied to the data.
     flavor
         Determines what kind of cells to generate.
     postprocess
@@ -313,7 +347,7 @@ def spread(
         table.append(cells)
 
     # We're going to add the positions of the named variables to the data
-    data = data.copy()
+    named_variables = {}
     cell_names = {}
     for c, col in enumerate(table):
         for r, cell in enumerate(col):
@@ -321,7 +355,7 @@ def spread(
                 cell_names[len(cell_names)] = None
             elif _is_named_formula(cell.expr):
                 name = cell.expr.split(" = ")[0]
-                data[name] = cell.address
+                named_variables[name] = cell.address
                 cell_names[len(cell_names)] = name
             elif _is_variable(cell.expr):
                 cell_names[len(cell_names)] = cell.expr[1:]
@@ -330,7 +364,11 @@ def spread(
 
     if flavor == Flavor.PYGSHEETS.value:
         cells = [
-            cell.as_pygsheets(data=data, replace_missing_with=replace_missing_with)
+            cell.as_pygsheets(
+                data=data,
+                named_variables=named_variables,
+                replace_missing_with=replace_missing_with,
+            )
             for col in table
             for cell in col
         ]

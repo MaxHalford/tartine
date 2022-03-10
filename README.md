@@ -385,7 +385,8 @@ Spread data into cells.
     template
         A list of expressions which determines how the cells are layed out.
     data
-        A dictionary of data to render.
+        Data to render. Can be a dictionary, a dataclass, a list; just as long as the template
+        expressions can be applied to the data.
     flavor
         Determines what kind of cells to generate.
     postprocess
