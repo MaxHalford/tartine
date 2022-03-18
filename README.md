@@ -28,8 +28,10 @@
   - [Fetching some data](#fetching-some-data)
   - [Getting started](#getting-started)
   - [Spreading a dataframe](#spreading-a-dataframe)
-  - [Linking more cells](#linking-more-cells)
-  - [Cell formatting](#cell-formatting)
+  - [Linking cells](#linking-cells)
+  - [Cell styling](#cell-styling)
+  - [Styling one cell at a time](#styling-one-cell-at-a-time)
+  - [Adding notes](#adding-notes)
   - [Unspreading a dataframe](#unspreading-a-dataframe)
   - [Handling nested data](#handling-nested-data)
 - [API reference](#api-reference)
@@ -96,7 +98,7 @@ You use `tartine` by specifying how you want to spread your data with a template
 
 ```py
 template = {
-    'Set name': "@'Set name'",
+    'Set name': '@Set name',
     'Rarity': ['Common', 'Rare', 'Epic', 'Legendary'],
     'Count': [
         '@Common',
@@ -154,7 +156,7 @@ These cells can be sent to the [GSheet](https://docs.google.com/spreadsheets/d/1
 
 ```py
 wks = sh.worksheet_by_title('v1')
-wks.clear()
+wks.clear(fields='*')
 wks.update_cells(cells)
 ```
 
@@ -176,7 +178,7 @@ cells = tartine.spread_dataframe(
 )
 
 wks = sh.worksheet_by_title('v2')
-wks.clear()
+wks.clear(fields='*')
 wks.update_cells(cells)
 ```
 
@@ -184,14 +186,12 @@ wks.update_cells(cells)
     <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=709697806">👀 See the result ✨</a></h4>
 </div>
 
-### Linking more cells
+### Linking cells
 
 The spreadsheet we built displays the data in a static manner. The share of each rarity is obtained by dividing the amount of cards by the total amount. You'll notice that the total doesn't change if you manually edit any of the amounts. This is because it's calculated from the data, and isn't actually referencing any of the cells. We can change this by using named formulas instead of variables.
 
 ```py
-template = {
-    'Set name': "@'Set name'",
-    'Rarity': ['Common', 'Rare', 'Epic', 'Legendary'],
+template.update({
     'Count': [
         'common = @Common',
         'rare = @Rare',
@@ -205,7 +205,7 @@ template = {
         '= @legendary / @total'
     ],
     'Total': 'total = @common + @rare + @epic + @legendary'
-}
+})
 
 cells = tartine.spread_dataframe(
     template=template,
@@ -214,7 +214,7 @@ cells = tartine.spread_dataframe(
 )
 
 wks = sh.worksheet_by_title('v3')
-wks.clear()
+wks.clear(fields='*')
 wks.update_cells(cells)
 ```
 
@@ -224,13 +224,17 @@ Now you should see the cell values update automatically when you modify any of t
     <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=2042929262">👀 See the result ✨</a></h4>
 </div>
 
-### Cell formatting
+### Cell styling
 
-The sheet we have displays the data correctly and the cells are linked with each other. Yipee. However, it's a bit ugly, and it would be nice to also format the cells programmatically. Indeed, readability would be improved by adding some colors and formatting the percentages.
+The sheet we have displays the data correctly and the cells are linked with each other. Yipee. However, it's a bit ugly, and it would be nice to also format the cells programmatically. Indeed, readability would be improved by adding some colors.
 
 There is a `postprocess` parameter that allows to do any kind of transformation to each cell once it has been created. This can be used to pass a `stylize` function which applies the adequate modifications.
 
 ```py
+# Let's add empty for background coloring
+template['Set name'] = ['@Set name', '', '', '']
+template['Total'] = ['total = @common + @rare + @epic + @legendary', '', '', '']
+
 GRAY = (245 / 255, 245 / 255, 250 / 255, 1)
 BLUE = (65 / 255, 105 / 255, 255 / 255, 1)
 PURPLE = (191 / 255, 0 / 255, 255 / 255, 1)
@@ -245,13 +249,6 @@ def stylize(cell, name):
     # Shade every group of 4 rows
     if any(cell.row % 8 - r == 0 for r in (2, 3, 4, 5)):
         cell.color = GRAY
-
-    # Format percentages
-    if name and 'share' in name:
-        cell.set_number_format(
-            format_type= pygsheets.FormatType.PERCENT,
-            pattern='##0.00%'
-        )
 
     # Color by rarity
     if name and 'rare' in name:
@@ -271,12 +268,91 @@ cells = tartine.spread_dataframe(
 )
 
 wks = sh.worksheet_by_title('v4')
-wks.clear()
+wks.clear(fields='*')
 wks.update_cells(cells)
 ```
 
 <div align="center">
     <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=1836554356">👀 See the result ✨</a></h4>
+</div>
+
+### Styling one cell at a time
+
+The `postprocess` argument allows you to style cells in a global manner. You can also pass an extra value to a template entry to style a cell in particular. As an example, let's format the percentages.
+
+```py
+def format_pct(cell):
+    cell.set_number_format(
+        format_type=pygsheets.FormatType.PERCENT,
+        pattern='0%'
+    )
+    return cell
+
+template['Share'] = [
+    ('= @common / @total', format_pct),
+    ('= @rare / @total', format_pct),
+    ('= @epic / @total', format_pct),
+    ('= @legendary / @total', format_pct)
+]
+
+cells = tartine.spread_dataframe(
+    template=template,
+    df=card_sets,
+    flavor='pygsheets',
+    postprocess=stylize
+)
+
+wks = sh.worksheet_by_title('v5')
+wks.clear(fields='*')
+wks.update_cells(cells)
+```
+
+<div align="center">
+    <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=2046920632">👀 See the result ✨</a></h4>
+</div>
+
+### Adding notes
+
+You may also want to include cell notes. This can be done by padding yet another argument to the relevant template entries. For instance, let's add a note detailing how each share is calculated.
+
+```py
+template['Share'] = [
+    (
+        '= @common / @total',
+        format_pct,
+        '@Common / (@Common + @Rare + @Epic + @Legendary)'
+    ),
+    (
+        '= @rare / @total',
+        format_pct,
+        '@Rare / (@Common + @Rare + @Epic + @Legendary)'
+    ),
+    (
+        '= @epic / @total',
+        format_pct,
+        '@Epic / (@Common + @Rare + @Epic + @Legendary)'
+    ),
+    (
+        '= @legendary / @total',
+        format_pct,
+        '@Legendary / (@Common + @Rare + @Epic + @Legendary)'
+    )
+]
+
+cells = tartine.spread_dataframe(
+    template=template,
+    df=card_sets,
+    flavor='pygsheets',
+    postprocess=stylize
+)
+
+wks = sh.worksheet_by_title('v6')
+wks.clear(fields='*')
+wks.update_cells(cells)
+```
+
+<div align="center">
+    <h4><a href="https://docs.google.com/spreadsheets/d/13DneVfUZQlfnKHN2aeo6LUQwCHnjixJ8bV4x092HKqA/edit#gid=2111260219">👀 See the result ✨</a></h4>
 </div>
 
 ### Unspreading a dataframe

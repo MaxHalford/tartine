@@ -5,7 +5,6 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import glom
 
-
 __all__ = ["spread", "spread_dataframe", "unspread_dataframe"]
 
 
@@ -129,6 +128,7 @@ class _Cell:
     c: int
     expr: str
     note: Optional[str] = None
+    postprocess: Optional[Callable] = None
 
     @property
     def address(self) -> str:
@@ -166,7 +166,15 @@ class _Cell:
             cell.formula = expr
 
         if self.note is not None:
-            cell.note = _bake_expression(self.note, data)
+            cell.note = _bake_expression(
+                expr=self.note,
+                data=data,
+                named_variables=named_variables,
+                replace_missing_with=replace_missing_with,
+            )
+
+        if self.postprocess is not None:
+            cell = self.postprocess(cell)
 
         return cell
 
@@ -337,11 +345,19 @@ def spread(
     for c, col in enumerate(template):
         cells = []
         for r, expr in enumerate(col if isinstance(col, list) else [col]):
+            pp = None
             note = None
             if isinstance(expr, tuple):
-                expr, note = expr
+                if len(expr) == 2:
+                    expr, pp = expr
+                else:
+                    expr, pp, note, *_ = expr
             cell = _Cell(
-                r=r + start_at, c=c, expr=_normalize_expression(expr), note=note
+                r=r + start_at,
+                c=c,
+                expr=_normalize_expression(expr),
+                note=note,
+                postprocess=pp,
             )
             cells.append(cell)
         table.append(cells)
