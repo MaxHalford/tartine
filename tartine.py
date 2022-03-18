@@ -432,7 +432,13 @@ def spread_dataframe(
 
     """
 
-    cells, nrows = spread(template.keys(), data=None, flavor=flavor)
+    cells, nrows = spread(
+        template.keys(),
+        data=None,
+        flavor=flavor,
+        postprocess=postprocess,
+        replace_missing_with=replace_missing_with,
+    )
 
     for card_set in df.to_dict("records"):
         _cells, _nrows = spread(
