@@ -157,7 +157,7 @@ These cells can be sent to the [GSheet](https://docs.google.com/spreadsheets/d/1
 ```py
 wks = sh.worksheet_by_title('v1')
 wks.clear(fields='*')
-wks.update_cells(cells)
+wks.update_values(cell_list=cells)
 ```
 
 <div align="center">
@@ -179,7 +179,7 @@ cells = tartine.spread_dataframe(
 
 wks = sh.worksheet_by_title('v2')
 wks.clear(fields='*')
-wks.update_cells(cells)
+wks.update_values(cell_list=cells)
 ```
 
 <div align="center">
@@ -215,7 +215,7 @@ cells = tartine.spread_dataframe(
 
 wks = sh.worksheet_by_title('v3')
 wks.clear(fields='*')
-wks.update_cells(cells)
+wks.update_values(cell_list=cells)
 ```
 
 Now you should see the cell values update automatically when you modify any of the amounts.
@@ -269,7 +269,7 @@ cells = tartine.spread_dataframe(
 
 wks = sh.worksheet_by_title('v4')
 wks.clear(fields='*')
-wks.update_cells(cells)
+wks.update_values(cell_list=cells)
 ```
 
 <div align="center">
@@ -304,7 +304,7 @@ cells = tartine.spread_dataframe(
 
 wks = sh.worksheet_by_title('v5')
 wks.clear(fields='*')
-wks.update_cells(cells)
+wks.update_values(cell_list=cells)
 ```
 
 <div align="center">
@@ -348,7 +348,7 @@ cells = tartine.spread_dataframe(
 
 wks = sh.worksheet_by_title('v6')
 wks.clear(fields='*')
-wks.update_cells(cells)
+wks.update_values(cell_list=cells)
 ```
 
 <div align="center">
