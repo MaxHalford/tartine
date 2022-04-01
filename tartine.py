@@ -155,7 +155,7 @@ class _Cell:
         import pygsheets
 
         expr = _bake_expression(
-            expr=self.expr,
+            str_expr=self.expr,
             data=data,
             named_variables=named_variables,
             replace_missing_with=replace_missing_with,
@@ -224,7 +224,7 @@ def _replace_variables(
 
 
 def _bake_expression(
-    expr: Expr,
+    str_expr: StrExpr,
     data: Any,
     named_variables: Optional[dict] = None,
     replace_missing_with: Optional[str] = None,
@@ -259,13 +259,6 @@ def _bake_expression(
     >>> _bake_expression(expr, data)
     '50 + 35 + 24 + 26'
 
-    You can also use arbitrary functions if string expressions are not enough.
-
-    >>> data = {'a': 3, 'b': 8}
-    >>> expr = lambda x: f"{x['a']} * x + {x['b']}"
-    >>> _bake_expression(expr, data)
-    '3 * x + 8'
-
     An exception is raised if a variable can't be found. Alternatively, you can also set a default
     value in case this happens.
 
@@ -285,11 +278,8 @@ def _bake_expression(
 
     """
 
-    if callable(expr):
-        return expr(data)
-
     str_expr = _replace_variables(
-        str_expr=expr,
+        str_expr=str_expr,
         data=data,
         named_variables=named_variables or {},
         replace_missing_with=replace_missing_with,
@@ -344,7 +334,19 @@ def spread(
     table = []
     for c, col in enumerate(template):
         cells = []
+
+        if callable(col):
+            col = col(data)
+
         for r, expr in enumerate(col if isinstance(col, list) else [col]):
+
+            if callable(expr):
+                expr = expr(data)
+
+            # expr can be:
+            # - expr
+            # - (expr, postprocessor)
+            # - (expr, postprocessor, note)
             pp = None
             note = None
             if isinstance(expr, tuple):
@@ -352,6 +354,7 @@ def spread(
                     expr, pp = expr
                 else:
                     expr, pp, note, *_ = expr
+
             cell = _Cell(
                 r=r + start_at,
                 c=c,
@@ -367,9 +370,7 @@ def spread(
     cell_names = {}
     for c, col in enumerate(table):
         for r, cell in enumerate(col):
-            if callable(cell.expr):
-                cell_names[len(cell_names)] = None
-            elif _is_named_formula(cell.expr):
+            if _is_named_formula(cell.expr):
                 name = cell.expr.split(" = ")[0]
                 named_variables[name] = cell.address
                 cell_names[len(cell_names)] = name
