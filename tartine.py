@@ -167,7 +167,7 @@ class _Cell:
 
         if self.note is not None:
             cell.note = _bake_expression(
-                expr=self.note,
+                str_expr=self.note,
                 data=data,
                 named_variables=named_variables,
                 replace_missing_with=replace_missing_with,
